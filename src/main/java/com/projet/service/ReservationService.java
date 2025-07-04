@@ -29,6 +29,13 @@ public class ReservationService {
     public void deleteById(int id) {
         reservationRepository.deleteById(id);
     }
+    public List<Reservation> findByAdherantId(int idAdherent) {
+        return reservationRepository.findByAdherant_IdAdherent(idAdherent);
+    }
+
+    public List<Reservation> findByExemplaireId(int idExemplaire) {
+        return reservationRepository.findByExemplaire_IdExemplaire(idExemplaire);
+    }
 
    
 }
