@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.*;
 import com.projet.entity.Adherant;
 import com.projet.entity.Exemplaire;
 import com.projet.entity.Pret;
+import com.projet.entity.Reservation;
 import com.projet.entity.TypePret;
+import com.projet.entity.Status;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
@@ -27,8 +29,13 @@ public class AdherantController {
     private PretService pretService;
     @Autowired
     private ExemplaireService exemplaireService;
-     @Autowired
+    @Autowired
     private TypePretService typePretService;
+    @Autowired
+    private StatusService statusService;
+    @Autowired
+    private ReservationService reservationService;
+    
 
     @PostMapping("/adherent_login")
     public String login(@RequestParam("nom") String nom,
@@ -122,6 +129,65 @@ public class AdherantController {
         model.addAttribute("types", typePretService.getAllTypePrets());
 
         return "Adherant/insert_pret";
+    }
+
+
+     @GetMapping("/faire_reservation")
+    public String render_reservation(Model model) {
+        // Récupérer la liste des exemplaires avec leur livre associé
+        List<Exemplaire> exemplaires = exemplaireService.getAllExemplairesAvecLivre();
+        model.addAttribute("exemplaires", exemplaires);
+        return "Adherant/Reservation";
+    }
+
+    @PostMapping("/insert_reservation")
+    public String insertReservation(@RequestParam("id_exemplaire") int idExemplaire,
+                                   @RequestParam("date_debut_pret") String dateDebutPretStr,
+                                   @RequestParam("date_fin_pret") String dateFinPretStr,
+                                   Model model,
+                                   HttpSession session) {
+        try {
+            Integer adherantId = (Integer) session.getAttribute("adherantId");
+            if (adherantId == null) {
+                model.addAttribute("erreur", "Vous devez être connecté pour effectuer une réservation.");
+                return "Adherant/Reservation";
+            }
+            Adherant adherant = adherantService.findById(adherantId).orElse(null);
+            Exemplaire exemplaire = exemplaireService.findById(idExemplaire).orElse(null);
+
+            // Trouver le status "en attent" (ou "en attente")
+            Status status = statusService.findAll().stream()
+                .filter(s -> s.getNomStatus().equalsIgnoreCase("en attent") || s.getNomStatus().equalsIgnoreCase("En attente"))
+                .findFirst()
+                .orElse(null);
+
+            if (status == null) {
+                model.addAttribute("erreur", "Le status 'en attent' n'existe pas.");
+                model.addAttribute("exemplaires", exemplaireService.getAllExemplairesAvecLivre());
+                return "Adherant/Reservation";
+            }
+
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            Date dateDebutPret = sdf.parse(dateDebutPretStr);
+            Date dateFinPret = sdf.parse(dateFinPretStr);
+
+            Reservation reservation = new Reservation();
+            reservation.setAdherant(adherant);
+            reservation.setExemplaire(exemplaire);
+            reservation.setStatus(status);
+            reservation.setDateReservation(new Date()); // maintenant
+            reservation.setDateDebutPret(dateDebutPret);
+            reservation.setDateFinPret(dateFinPret);
+
+            reservationService.save(reservation);
+
+            model.addAttribute("message", "Réservation effectuée avec succès !");
+        } catch (Exception e) {
+            model.addAttribute("erreur", "Erreur lors de la réservation.");
+        }
+
+        model.addAttribute("exemplaires", exemplaireService.getAllExemplairesAvecLivre());
+        return "Adherant/Reservation";
     }
 
    
