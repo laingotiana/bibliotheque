@@ -1,5 +1,5 @@
 package com.projet.controller;
-import com.projet.service.AdherantService;
+import com.projet.service.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -7,9 +7,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import com.projet.entity.Adherant;
-
-
-
+import com.projet.entity.Pret;
+import java.util.List;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -18,7 +17,8 @@ public class AdherantController {
 
     @Autowired
     private AdherantService adherantService;
-
+    @Autowired
+    private PretService pretService;
 
     @PostMapping("/adherent_login")
     public String login(@RequestParam("nom") String nom,
@@ -37,6 +37,20 @@ public class AdherantController {
             return "Adherant/form_adherant"; // Redirige vers la page de login en cas d'échec
         }
     }
+
+       @GetMapping("/liste_pret")
+    public String voirPretsAdherant(HttpSession session, Model model) {
+        Integer adherantId = (Integer) session.getAttribute("adherantId");
+        if (adherantId == null) {
+            model.addAttribute("erreur", "Vous devez être connecté pour voir vos prêts.");
+            return "Adherant/form_adherant";
+        }
+        List<Pret> prets = pretService.findByAdherantId(adherantId);
+        model.addAttribute("prets", prets);
+        return "Adherant/pret_list";
+   
+
+   }
    
 
 }

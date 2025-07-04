@@ -26,6 +26,15 @@ public class PretService {
         return pretRepository.save(pret);
     }
 
+    public List<Pret> findByAdherantId(int adherantId) {
+        return pretRepository.findByAdherant_IdAdherent(adherantId);
+    }
+
+    public List<Pret> findByAdherant(Adherant adherant) {
+        return pretRepository.findByAdherant(adherant);
+    }
+
+
    
    
 }
