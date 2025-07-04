@@ -30,5 +30,9 @@ public class ExemplaireService {
         exemplaireRepository.deleteById(id);
     }
 
+    public List<Exemplaire> getAllExemplairesAvecLivre() {
+        return exemplaireRepository.findAllWithLivre();
+    }
+
     
 }

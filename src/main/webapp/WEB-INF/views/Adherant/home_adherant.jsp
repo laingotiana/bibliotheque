@@ -127,10 +127,10 @@
         </div>
         <ul class="sidebar-menu">
             <li><a href="#">Voir les livres</a></li>
-            <li><a href="#">Mes prets</a></li>
-            <li><a href="#">faire une  reservations</a></li>
+            <li><a href="liste_pret">Mes prets</a></li>
+            <li><a href="#">faire une reservations</a></li>
             <li><a href="#">Mon profil</a></li>
-             <li><a href="#">Faire une pret</a></li>
+             <li><a href="render_insertPret">Faire une pret</a></li>
             <li><a href="#">Deconnexion</a></li>
         </ul>
     </div>
