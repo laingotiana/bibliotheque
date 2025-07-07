@@ -137,7 +137,7 @@ public class AdherantController {
         // Récupérer la liste des exemplaires avec leur livre associé
         List<Exemplaire> exemplaires = exemplaireService.getAllExemplairesAvecLivre();
         model.addAttribute("exemplaires", exemplaires);
-        return "Adherant/Reservation";
+        return "Adherant/reservation";
     }
 
     @PostMapping("/insert_reservation")
@@ -150,7 +150,7 @@ public class AdherantController {
             Integer adherantId = (Integer) session.getAttribute("adherantId");
             if (adherantId == null) {
                 model.addAttribute("erreur", "Vous devez être connecté pour effectuer une réservation.");
-                return "Adherant/Reservation";
+                return "Adherant/reservation";
             }
             Adherant adherant = adherantService.findById(adherantId).orElse(null);
             Exemplaire exemplaire = exemplaireService.findById(idExemplaire).orElse(null);
@@ -164,7 +164,7 @@ public class AdherantController {
             if (status == null) {
                 model.addAttribute("erreur", "Le status 'en attent' n'existe pas.");
                 model.addAttribute("exemplaires", exemplaireService.getAllExemplairesAvecLivre());
-                return "Adherant/Reservation";
+                return "Adherant/reservation";
             }
 
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -187,7 +187,7 @@ public class AdherantController {
         }
 
         model.addAttribute("exemplaires", exemplaireService.getAllExemplairesAvecLivre());
-        return "Adherant/Reservation";
+        return "Adherant/reservation";
     }
 
    
