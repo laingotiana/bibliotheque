@@ -30,7 +30,7 @@
         }
         .left-img {
             flex: 1.2;
-            background: url('https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=600&q=80') center center/cover no-repeat;
+            background: url('https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=600&q=80') center center/cover no-repeat;
             min-width: 280px;
             min-height: 100%;
         }
@@ -116,7 +116,7 @@
     <div class="main-wrapper">
         <div class="left-img"></div>
         <div class="container">
-            <h1>Bienvenue a la Bibliotheque</h1>
+            <h1>BIENVENUE A LA SITE DE BIBLIOTHEQUE</h1>
             <div class="nav-links">
                 <a href="admin">Admin</a>
                 <a href="adherent">Adherant</a>
