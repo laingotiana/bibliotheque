@@ -3,6 +3,8 @@ package com.projet.controller;
 import com.projet.entity.Penalite;
 import com.projet.entity.Pret;
 import com.projet.entity.Reservation;
+import com.projet.entity.TypePret;
+import com.projet.entity.Status;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -24,9 +26,12 @@ public class AdminController {
 
     @Autowired
     private PretService pretService;
-    
+
     @Autowired
     private PenaliteService penaliteService;
+
+    @Autowired
+    private ReservationService reservationService;
 
     @PostMapping("/login")
     public String login(@RequestParam("nom") String nom,
@@ -93,6 +98,35 @@ public class AdminController {
             model.addAttribute("prets", pretService.findAll());
             return "Admin/home";
         }
+    }
+    @GetMapping("/render_gestion")
+    public String getAllReservation(Model model) {
+        List<Reservation> reservations = reservationService.findAll();
+        model.addAttribute("reservations", reservations);
+        return "Admin/Reservation";
+    }
+
+    @GetMapping("/accepter_reservation")
+    public String accepter_reservation(
+         @RequestParam("id_reservation") int id_reservation,
+         Model model
+    ){
+        Reservation reservation = reservationService.findById(id_reservation);
+        Status status =new Status(2,"Confirmée");
+        reservation.setStatus(status);
+        reservationService.save(reservation);
+        Pret pret = new Pret();
+        pret.setAdherant(reservation.getAdherant());
+        pret.setExemplaire(reservation.getExemplaire());
+        pret.setDateDebut(reservation.getDateDebutPret());
+        pret.setDateFin(reservation.getDateFinPret());
+        pret.setRendu(0);
+        TypePret typePret = new TypePret(2,"Long terme");
+        pret.setTypePret(typePret);
+        pretService.save(pret);
+        List<Reservation> reservations = reservationService.findAll();
+        model.addAttribute("reservations", reservations);
+        return "Admin/Reservation";
     }
    
 }
