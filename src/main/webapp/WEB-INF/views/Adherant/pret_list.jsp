@@ -47,6 +47,6 @@
         </table>
     </c:if>
     <br>
-    <a href="#">Retour à l'accueil</a>
+    <a href="/">Retour à l'accueil</a>
 </body>
 </html>
