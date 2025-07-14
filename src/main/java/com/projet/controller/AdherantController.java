@@ -11,10 +11,10 @@ import org.springframework.web.bind.annotation.*;
 import com.projet.entity.Adherant;
 import com.projet.entity.Exemplaire;
 import com.projet.entity.Pret;
+import com.projet.entity.Prolongement;
 import com.projet.entity.Reservation;
 import com.projet.entity.TypePret;
 import com.projet.entity.Status;
-import com.projet.service.ReservationService;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
@@ -36,6 +36,8 @@ public class AdherantController {
     private StatusService statusService;
     @Autowired
     private ReservationService reservationService;
+    @Autowired
+    private ProlongementService prolongementService;
     
 
     @PostMapping("/adherent_login")
@@ -230,6 +232,77 @@ public class AdherantController {
         List<Reservation> reservations = reservationService.findByAdherantId(adherantId);
         model.addAttribute("reservations", reservations);
         return "Adherant/reservation_list";
+    }
+
+     @PostMapping("/prolonger")
+    String prolongerPret(@RequestParam("pretId") int pretId,
+                        @RequestParam("dateProlongement") String dateProlongement,
+                        Model model,
+                        HttpSession session) {
+        try {
+            if(pretId != 0) {
+                // Récupérer l'adhérent connecté
+                Integer adherantId = (Integer) session.getAttribute("adherantId");
+                if (adherantId == null) {
+                    model.addAttribute("erreur", "Vous devez être connecté pour demander un prolongement.");
+                    return "Adherant/pret_list";
+                }
+                
+                Adherant adherant = adherantService.findById(adherantId).orElse(null);
+                if (adherant == null) {
+                    model.addAttribute("erreur", "Adhérent non trouvé.");
+                    return "Adherant/pret_list";
+                }
+                
+                // Récupérer le prêt
+                Pret pret = pretService.findPretById(pretId);
+                if (pret == null) {
+                    model.addAttribute("erreur", "Prêt non trouvé.");
+                    return "Adherant/pret_list";
+                }
+                
+                // Transformer la chaîne en Date
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                Date dateProlongementStr = sdf.parse(dateProlongement);
+                
+                // Créer le prolongement
+                Prolongement prolongement = new Prolongement();
+                prolongement.setPret(pret);
+                prolongement.setDateProlongement(dateProlongementStr);
+                prolongement.setAdherant(adherant);
+                
+
+
+                
+                // Trouver le statut "En attente" dans la base de données
+                Status statusEnAttente = statusService.findAll().stream()
+                    .filter(s -> s.getNomStatus().equalsIgnoreCase("en attent") || s.getNomStatus().equalsIgnoreCase("En attente"))
+                    .findFirst()
+                    .orElse(new Status(1, "En attente"));
+                
+                prolongement.setStatus(statusEnAttente);
+                
+                // Sauvegarder le prolongement
+                prolongementService.save(prolongement);
+                
+                model.addAttribute("message", "Demande de prolongement envoyée avec succès !");
+            } else {
+                model.addAttribute("erreur", "Prêt non trouvé.");
+            }
+        } catch (Exception e) {
+            model.addAttribute("erreur", "Erreur lors de la demande de prolongement : " + e.getMessage());
+            e.printStackTrace();
+        }
+        if(pretId !=0){
+            Pret pretList = pretService.findPretById(pretId);
+            Adherant adherant=pretList.getAdherant();
+            int id =adherant.getIdAdherent();
+            if(id !=0){
+                List<Pret> prets =pretService.findByAdherantId(id);
+                model.addAttribute("prets", prets);
+            }
+        }
+        return "Adherant/pret_list";
     }
 
 }
