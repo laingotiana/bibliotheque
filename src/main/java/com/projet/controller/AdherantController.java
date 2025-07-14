@@ -409,75 +409,75 @@ public class AdherantController {
     }
 
 
-     @PostMapping("/prolonger")
-    String prolongerPret(@RequestParam("pretId") int pretId,
-                        @RequestParam("dateProlongement") String dateProlongement,
-                        Model model,
-                        HttpSession session) {
-        try {
-            if(pretId != 0) {
-                // Récupérer l'adhérent connecté
-                Integer adherantId = (Integer) session.getAttribute("adherantId");
-                if (adherantId == null) {
-                    model.addAttribute("erreur", "Vous devez être connecté pour demander un prolongement.");
-                    return "Adherant/pret_list";
-                }
+    //  @PostMapping("/prolonger")
+    // String prolongerPret(@RequestParam("pretId") int pretId,
+    //                     @RequestParam("dateProlongement") String dateProlongement,
+    //                     Model model,
+    //                     HttpSession session) {
+    //     try {
+    //         if(pretId != 0) {
+    //             // Récupérer l'adhérent connecté
+    //             Integer adherantId = (Integer) session.getAttribute("adherantId");
+    //             if (adherantId == null) {
+    //                 model.addAttribute("erreur", "Vous devez être connecté pour demander un prolongement.");
+    //                 return "Adherant/pret_list";
+    //             }
                 
-                Adherant adherant = adherantService.findById(adherantId).orElse(null);
-                if (adherant == null) {
-                    model.addAttribute("erreur", "Adhérent non trouvé.");
-                    return "Adherant/pret_list";
-                }
+    //             Adherant adherant = adherantService.findById(adherantId).orElse(null);
+    //             if (adherant == null) {
+    //                 model.addAttribute("erreur", "Adhérent non trouvé.");
+    //                 return "Adherant/pret_list";
+    //             }
                 
-                // Récupérer le prêt
-                Pret pret = pretService.findPretById(pretId);
-                if (pret == null) {
-                    model.addAttribute("erreur", "Prêt non trouvé.");
-                    return "Adherant/pret_list";
-                }
+    //             // Récupérer le prêt
+    //             Pret pret = pretService.findPretById(pretId);
+    //             if (pret == null) {
+    //                 model.addAttribute("erreur", "Prêt non trouvé.");
+    //                 return "Adherant/pret_list";
+    //             }
                 
-                // Transformer la chaîne en Date
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-                Date dateProlongementStr = sdf.parse(dateProlongement);
+    //             // Transformer la chaîne en Date
+    //             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+    //             Date dateProlongementStr = sdf.parse(dateProlongement);
                 
-                // Créer le prolongement
-                Prolongement prolongement = new Prolongement();
-                prolongement.setPret(pret);
-                prolongement.setDateProlongement(dateProlongementStr);
-                prolongement.setAdherant(adherant);
+    //             // Créer le prolongement
+    //             Prolongement prolongement = new Prolongement();
+    //             prolongement.setPret(pret);
+    //             prolongement.setDateProlongement(dateProlongementStr);
+    //             prolongement.setAdherant(adherant);
                 
 
 
                 
-                // Trouver le statut "En attente" dans la base de données
-                Status statusEnAttente = statusService.findAll().stream()
-                    .filter(s -> s.getNomStatus().equalsIgnoreCase("en attent") || s.getNomStatus().equalsIgnoreCase("En attente"))
-                    .findFirst()
-                    .orElse(new Status(1, "En attente"));
+    //             // Trouver le statut "En attente" dans la base de données
+    //             Status statusEnAttente = statusService.findAll().stream()
+    //                 .filter(s -> s.getNomStatus().equalsIgnoreCase("en attent") || s.getNomStatus().equalsIgnoreCase("En attente"))
+    //                 .findFirst()
+    //                 .orElse(new Status(1, "En attente"));
                 
-                prolongement.setStatus(statusEnAttente);
+    //             prolongement.setStatus(statusEnAttente);
                 
-                // Sauvegarder le prolongement
-                prolongementService.save(prolongement);
+    //             // Sauvegarder le prolongement
+    //             prolongementService.save(prolongement);
                 
-                model.addAttribute("message", "Demande de prolongement envoyée avec succès !");
-            } else {
-                model.addAttribute("erreur", "Prêt non trouvé.");
-            }
-        } catch (Exception e) {
-            model.addAttribute("erreur", "Erreur lors de la demande de prolongement : " + e.getMessage());
-            e.printStackTrace();
-        }
-        if(pretId !=0){
-            Pret pretList = pretService.findPretById(pretId);
-            Adherant adherant=pretList.getAdherant();
-            int id =adherant.getIdAdherent();
-            if(id !=0){
-                List<Pret> prets =pretService.findByAdherantId(id);
-                model.addAttribute("prets", prets);
-            }
-        }
-        return "Adherant/pret_list";
-    }
+    //             model.addAttribute("message", "Demande de prolongement envoyée avec succès !");
+    //         } else {
+    //             model.addAttribute("erreur", "Prêt non trouvé.");
+    //         }
+    //     } catch (Exception e) {
+    //         model.addAttribute("erreur", "Erreur lors de la demande de prolongement : " + e.getMessage());
+    //         e.printStackTrace();
+    //     }
+    //     if(pretId !=0){
+    //         Pret pretList = pretService.findPretById(pretId);
+    //         Adherant adherant=pretList.getAdherant();
+    //         int id =adherant.getIdAdherent();
+    //         if(id !=0){
+    //             List<Pret> prets =pretService.findByAdherantId(id);
+    //             model.addAttribute("prets", prets);
+    //         }
+    //     }
+    //     return "Adherant/pret_list";
+    // }
 
 }
