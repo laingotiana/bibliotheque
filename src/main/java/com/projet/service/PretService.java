@@ -27,6 +27,9 @@ public class PretService {
     public Pret save(Pret pret) {
         return pretRepository.save(pret);
     }
+      public Pret findPretById(int id){
+        return pretRepository.findByIdPret(id);
+    }
 
     public List<Pret> findByAdherantId(int adherantId) {
         return pretRepository.findByAdherant_IdAdherent(adherantId);
