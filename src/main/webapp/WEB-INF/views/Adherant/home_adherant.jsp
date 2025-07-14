@@ -3,136 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accueil Adherent</title>
+    <title>Accueil Adhérent</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #ffffff 100%);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(120deg, #fffbe9 0%, #f5f3f0 100%);
             min-height: 100vh;
-            color: #fff; /* Font color set to white */
         }
-
-        .sidebar {
-            height: 100vh;
-            width: 280px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            background: rgba(44, 62, 80, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 30px 0;
-            box-shadow: 2px 0 20px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-        }
-
-        .sidebar-header {
-            padding: 0 30px 30px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 30px;
-        }
-
-        .sidebar-header h2 {
-            color: #ecf0f1;
-            font-size: 24px;
-            font-weight: 300;
-            text-align: center;
-        }
-
-        .sidebar-header .user-info {
-            text-align: center;
-            margin-top: 15px;
-        }
-
-        .user-avatar {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea, #ffffff);
+        .main-wrapper {
             display: flex;
+            min-height: 100vh;
+            align-items: stretch;
+        }
+        .left-img {
+            flex: 0 0 320px;
+            background: url('https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=600&q=80') center center/cover no-repeat;
+            min-width: 220px;
+            min-height: 100%;
+        }
+        .content-area {
+            flex: 1 1 auto;
+            padding: 48px 32px;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            margin: 0 auto 10px;
-            color: white;
-            font-size: 24px;
-            font-weight: bold;
+            justify-content: flex-start;
         }
-
-        .user-name {
-            color: #bdc3c7;
-            font-size: 14px;
+        .logo {
+            width: 70px;
+            height: 70px;
+            margin-bottom: 18px;
         }
-
-        .sidebar-menu {
+        h2 {
+            color: #a67c52;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .menu-list {
             list-style: none;
             padding: 0;
-        }
-
-        .sidebar-menu li {
-            margin-bottom: 5px;
-        }
-
-        .sidebar-menu a {
-            display: flex;
-            align-items: center;
-            color: #ecf0f1;
-            padding: 18px 30px;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .sidebar-menu a::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
+            margin: 0 0 30px 0;
             width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            transition: left 0.5s;
+            max-width: 400px;
         }
-
-        .sidebar-menu a:hover::before {
-            left: 100%;
+        .menu-list li {
+            margin-bottom: 12px;
         }
-
-        .sidebar-menu a:hover {
-            background: rgba(52, 73, 94, 0.8);
-            transform: translateX(5px);
-            border-left: 4px solid #667eea;
+        .menu-link {
+            display: block;
+            background: #fffbe9;
+            color: #a67c52;
+            text-decoration: none;
+            padding: 16px 28px;
+            border-radius: 8px;
+            font-size: 1.15rem;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(166,124,82,0.06);
+            transition: background 0.2s, color 0.2s, transform 0.2s;
         }
-
-        @media (max-width: 768px) {
-            .sidebar {
+        .menu-link:hover, .menu-link.active {
+            background: #a67c52;
+            color: #fffbe9;
+            transform: scale(1.03);
+        }
+        @media (max-width: 991px) {
+            .content-area {
+                padding: 18px 5px;
+            }
+        }
+        @media (max-width: 600px) {
+            .main-wrapper {
+                flex-direction: column;
+            }
+            .left-img {
+                min-height: 120px;
                 width: 100%;
-                height: auto;
-                position: relative;
+            }
+            .content-area {
+                padding: 8px 2px;
+            }
+            h2 {
+                font-size: 1.2rem;
             }
         }
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <div class="user-avatar">A</div>
-            <div class="user-name">Adherent</div>
-            <h2>Bibliotheque</h2>
+    <div class="main-wrapper">
+        <div class="left-img"></div>
+        <div class="content-area">
+            <img src="https://cdn-icons-png.flaticon.com/512/29/29302.png" alt="Logo Livre" class="logo" />
+            <h2>Bienvenue sur le site Bibliotheque des adherants</h2>
+            <ul class="menu-list">
+                <li><a href="#" class="menu-link">Voir les livres</a></li>
+                <li><a href="liste_pret" class="menu-link">Mes prets</a></li>
+                <li><a href="render_insertPret" class="menu-link">Faire un pret</a></li>
+                <li><a href="liste_reservations" class="menu-link">Mes reservations</a></li>
+                <li><a href="faire_reservation" class="menu-link">Faire une reservation</a></li>
+                <li><a href="#" class="menu-link">Mon profil</a></li>
+                <li><a href="#" class="menu-link">Déconnexion</a></li>
+            </ul>
         </div>
-        <ul class="sidebar-menu">
-            <li><a href="#">Voir les livres</a></li>
-            <li><a href="liste_pret">Mes prets</a></li>
-            <li><a href="faire_reservation">faire une reservations</a></li>
-            <li><a href="#">Mon profil</a></li>
-             <li><a href="render_insertPret">Faire une pret</a></li>
-            <li><a href="#">Deconnexion</a></li>
-        </ul>
     </div>
+    <!-- Bootstrap JS Bundle (with Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
