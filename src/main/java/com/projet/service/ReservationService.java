@@ -18,7 +18,8 @@ public class ReservationService {
         return reservationRepository.findAll();
     }
 
-    public Optional<Reservation> findById(int id) {
+   
+    public Reservation findById(int id) {
         return reservationRepository.findById(id);
     }
 

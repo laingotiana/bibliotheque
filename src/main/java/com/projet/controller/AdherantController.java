@@ -14,6 +14,7 @@ import com.projet.entity.Pret;
 import com.projet.entity.Reservation;
 import com.projet.entity.TypePret;
 import com.projet.entity.Status;
+import com.projet.service.ReservationService;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
@@ -190,6 +191,45 @@ public class AdherantController {
         return "Adherant/reservation";
     }
 
-   
+    @GetMapping("/liste_reservations")
+    public String voirReservationsAdherant(HttpSession session, Model model) {
+        Integer adherantId = (Integer) session.getAttribute("adherantId");
+        if (adherantId == null) {
+            model.addAttribute("erreur", "Vous devez être connecté pour voir vos réservations.");
+            return "Adherant/form_adherant";
+        }
+        List<Reservation> reservations = reservationService.findByAdherantId(adherantId);
+        model.addAttribute("reservations", reservations);
+        return "Adherant/reservation_list";
+    }
+    @PostMapping("/annuler_reservation")
+    public String annulerReservation(@RequestParam("reservationId") int reservationId, HttpSession session, Model model) {
+        Integer adherantId = (Integer) session.getAttribute("adherantId");
+        if (adherantId == null) {
+            model.addAttribute("erreur", "Vous devez être connecté pour annuler une réservation.");
+            return "Adherant/form_adherant";
+        }
+        Reservation reservation = reservationService.findById(reservationId);
+        if (reservation == null || reservation.getAdherant().getIdAdherent() != adherantId) {
+            model.addAttribute("erreur", "Réservation non trouvée ou accès refusé.");
+        } else {
+            // Chercher le status "annulee" ou "Annulée"
+            Status statusAnnulee = statusService.findAll().stream()
+                .filter(s -> s.getNomStatus().equalsIgnoreCase("annulee") || s.getNomStatus().equalsIgnoreCase("Annulée"))
+                .findFirst()
+                .orElse(null);
+            if (statusAnnulee != null) {
+                reservation.setStatus(statusAnnulee);
+                reservationService.save(reservation);
+                model.addAttribute("message", "Réservation annulée avec succès.");
+            } else {
+                model.addAttribute("erreur", "Le status 'annulée' n'existe pas.");
+            }
+        }
+        // Rafraîchir la liste des réservations
+        List<Reservation> reservations = reservationService.findByAdherantId(adherantId);
+        model.addAttribute("reservations", reservations);
+        return "Adherant/reservation_list";
+    }
 
 }
