@@ -1,261 +1,247 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tableau de Bord Admin</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(120deg, #fffbe9 0%, #f5f3f0 100%);
+            min-height: 100vh;
         }
-
-        .navbar {
-            background-color: #2c3e50;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        .navbar-custom {
+            background: #3e2723;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
-
-        .navbar .logo {
-            color: white;
-            font-size: 24px;
+        .navbar-custom .navbar-brand {
+            color: #fffbe9;
             font-weight: bold;
-            text-decoration: none;
+            font-size: 1.7rem;
+            letter-spacing: 1px;
         }
-
-        .nav-links {
-            display: flex;
-            list-style: none;
-        }
-
-        .nav-links li {
-            margin-left: 20px;
-        }
-
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            font-size: 16px;
-            padding: 10px 15px;
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        .nav-links a:hover {
-            background-color: #34495e;
+        .navbar-custom .nav-link {
+            color: #fffbe9;
+            font-weight: 500;
+            margin-right: 10px;
             border-radius: 5px;
+            transition: background 0.2s, color 0.2s;
         }
-
-        .nav-links a.active {
-            background-color: #3498db;
-            border-radius: 5px;
+        .navbar-custom .nav-link.active, .navbar-custom .nav-link:hover {
+            background: #795548;
+            color: #fff;
         }
-
-        .hamburger {
-            display: none;
-            font-size: 24px;
-            color: white;
-            background: none;
-            border: none;
-            cursor: pointer;
+        .container-main {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(62,39,34,0.08);
+            margin: 40px auto 0 auto;
+            padding: 32px 24px;
+            max-width: 1100px;
         }
-
-        .loan-table {
-            width: 90%;
-            margin: 20px auto;
-            border-collapse: collapse;
-            background-color: #fff;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .loan-table th, .loan-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .loan-table th {
-            background-color: #2c3e50;
-            color: white;
-            position: sticky;
-            top: 0;
-        }
-
-        .loan-table tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-
-        .loan-table tr:hover {
-            background-color: #f1f1f1;
-        }
-
-        .container {
-            padding: 20px;
-            margin-top: 20px;
-        }
-
         h2 {
+            color: #3e2723;
+            font-weight: 700;
+            margin-bottom: 30px;
             text-align: center;
-            margin-bottom: 20px;
-            color: #2c3e50;
         }
-
-        .rendu-button {
-            background-color: #28a745;
-            color: white;
+        .table {
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(62,39,34,0.06);
+        }
+        .table thead th {
+            background: #3e2723;
+            color: #fffbe9;
+            font-weight: 600;
             border: none;
-            padding: 8px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background-color 0.3s;
         }
-
+        .table tbody tr:nth-child(even) {
+            background: #f5f3f0;
+        }
+        .table tbody tr:hover {
+            background: #ffe0b2;
+        }
+        .rendu-button {
+            background: #795548;
+            color: #fffbe9;
+            border: none;
+            padding: 7px 18px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background 0.2s, transform 0.2s;
+        }
         .rendu-button:hover {
-            background-color: #218838;
+            background: #3e2723;
+            color: #fff;
+            transform: scale(1.04);
         }
-
         .rendu-button:disabled {
-            background-color: #6c757d;
+            background: #bdbdbd;
+            color: #fff;
             cursor: not-allowed;
         }
-
         .status-pending {
-            color: #ffc107;
+            color: #ff9800;
             font-weight: bold;
         }
-
         .status-returned {
-            color: #28a745;
+            color: #388e3c;
             font-weight: bold;
         }
-
-        @media screen and (max-width: 768px) {
-            .hamburger {
-                display: block;
+        .date-picker-container label {
+            font-size: 0.95rem;
+            color: #3e2723;
+            margin-right: 8px;
+        }
+        .date-picker-container input[type="date"] {
+            border-radius: 5px;
+            border: 1px solid #bdbdbd;
+            padding: 3px 8px;
+        }
+        /* LOGO ADMIN NAVBAR */
+        .logo-admin {
+            width: 70px;
+            height: 70px;
+            margin-right: 12px;
+        }
+        @media (max-width: 991px) {
+            .container-main {
+                padding: 18px 5px;
             }
-
-            .nav-links {
-                display: none;
-                width: 100%;
-                position: absolute;
-                top: 60px;
-                left: 0;
-                background-color: #2c3e50;
-                flex-direction: column;
-                text-align: center;
+            .table {
+                font-size: 0.97rem;
             }
-
-            .nav-links.active {
-                display: flex;
+        }
+        @media (max-width: 600px) {
+            .container-main {
+                margin: 10px 0 0 0;
+                padding: 8px 2px;
             }
-
-            .nav-links li {
-                margin: 10px 0;
+            h2 {
+                font-size: 1.2rem;
             }
-
-            .loan-table {
-                font-size: 14px;
+            .table {
+                font-size: 0.93rem;
             }
         }
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <a href="#home" class="logo">Bibliothèque</a>
-        <ul class="nav-links">
-            <li><a href="#home" class="active">Accueil</a></li>
-            <li><a href="render_gestion">Gestion Réservation</a></li>
-            <li><a href="#">Services</a></li>
-            <li><a href="#">Contact</a></li>
-        </ul>
-        <button class="hamburger">☰</button>
+    <nav class="navbar navbar-expand-lg navbar-custom">
+        <div class="container-fluid">
+            <img src="https://cdn-icons-png.flaticon.com/512/29/29302.png" alt="Logo Livre" class="logo-admin"  />
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon" style="filter: invert(1);"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#home">Accueil</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="render_gestion">Gestion Reservation</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#services">Services</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#contact">Contact</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
     </nav>
 
-    <div class="container">
+    <div class="container-main">
         <h2>Liste des Prêts</h2>
-        <table class="loan-table">
-            <thead>
-                <tr>
-                    <th>Date Début</th>
-                    <th>Date Fin</th>
-                    <th>Statut</th>
-                    <th>Type</th>
-                    <th>Adhérent</th>
-                    <th>Exemplaire</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <c:forEach var="pret" items="${prets}">
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
                     <tr>
-                        <td>${pret.dateDebut}</td>
-                        <td>${pret.dateFin}</td>
-                        <td>
-                            <!-- Débogage temporaire -->
-                            <c:choose>
-                                <c:when test="${pret.getRendu() == 1}">
-                                    <span class="status-returned">Le livre est rendu</span>
-                                </c:when>
-                                <c:when test="${pret.getRendu() == 0}">
-                                    <span class="status-pending">En cours de lecture</span>
-                                </c:when>
-                                <c:otherwise>
-                                    <span class="status-pending">En cours de lecture</span>
-                                </c:otherwise>
-                            </c:choose>
-                        </td>
-                        <td>${pret.typePret.type}</td>
-                        <td>${pret.adherant.nom} ${pret.adherant.prenom}</td>
-                        <td>${pret.exemplaire.livre.titre} (ID: ${pret.exemplaire.idExemplaire})</td>
-                        <td>
-                            <c:choose>
-                                <c:when test="${pret.getRendu() == 1}">
-                                    <button class="rendu-button" disabled>Le livre est rendu</button>
-                                </c:when>
-                                <c:when test="${pret.getRendu() == 0}">
-                                    <a href="/prolonger?pretId=${pret.getIdPret()}" class="rendu-button">Prolonger</a>
-                                </c:when>
-                                <c:otherwise>
-                                    <span>En cours de lecture</span>
-                                </c:otherwise>
-                            </c:choose>
-                        </td>
+                        <th>Date Début</th>
+                        <th>Date Fin</th>
+                        <th>Statut</th>
+                        <th>Type</th>
+                        <th>Adhérent</th>
+                        <th>Exemplaire</th>
+                        <th>Action</th>
                     </tr>
-                </c:forEach>
-                <c:if test="${empty prets}">
-                    <tr>
-                        <td colspan="7" style="text-align: center;">Aucun prêt enregistré</td>
-                    </tr>
-                </c:if>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    <c:forEach var="pret" items="${prets}">
+                        <tr>
+                            <td><fmt:formatDate value="${pret.dateDebut}" pattern="yyyy-MM-dd"/></td>
+                            <td><fmt:formatDate value="${pret.dateFin}" pattern="yyyy-MM-dd"/></td>
+                            <td>
+                                <c:choose>
+                                    <c:when test="${pret.rendu == 1}">
+                                        <span class="status-returned">Le livre est rendu</span>
+                                    </c:when>
+                                    <c:when test="${pret.rendu == 0}">
+                                        <span class="status-pending">En cours de lecture</span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="status-pending">En cours de lecture</span>
+                                    </c:otherwise>
+                                </c:choose>
+                            </td>
+                            <td>${pret.typePret.type}</td>
+                            <td>${pret.adherant.nom} ${pret.adherant.prenom}</td>
+                            <td>${pret.exemplaire.livre.titre} (ID: ${pret.exemplaire.idExemplaire})</td>
+                            <td>
+                                <c:choose>
+                                    <c:when test="${pret.rendu == 1}">
+                                        <button class="rendu-button" disabled>
+                                            <i class="bi bi-check-circle"></i> Livre rendu
+                                        </button>
+                                    </c:when>
+                                    <c:when test="${pret.rendu == 0}">
+                                        <form action="${pageContext.request.contextPath}/rendre_livre" method="get" class="return-form">
+                                            <input type="hidden" name="pretId" value="${pret.idPret}">
+                                            <div class="date-picker-container mb-2">
+                                                <label for="date_rendu_${pret.idPret}">Date de retour :</label>
+                                                <c:set var="today" value="<%= new java.util.Date() %>"/>
+                                                <input type="date" id="date_rendu_${pret.idPret}" name="date_rendu" 
+                                                       value="<fmt:formatDate value='${today}' pattern='yyyy-MM-dd'/>"
+                                                >
+                                            </div>
+                                            <button type="submit" class="rendu-button">
+                                                <i class="bi bi-book"></i> Rendre
+                                            </button>
+                                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                        </form>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="status-pending">
+                                            <i class="bi bi-hourglass-split"></i> En cours
+                                        </span>
+                                    </c:otherwise>
+                                </c:choose>
+                            </td>
+                        </tr>
+                    </c:forEach>
+                    <c:if test="${empty prets}">
+                        <tr>
+                            <td colspan="7" class="text-center">Aucun prêt enregistré</td>
+                        </tr>
+                    </c:if>
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <script>
-        const hamburger = document.querySelector('.hamburger');
-        const navLinks = document.querySelector('.nav-links');
-        
-        hamburger.addEventListener('click', () => {
-            navLinks.classList.toggle('active');
-        });
-
-        // Fermer le menu lorsqu'on clique ailleurs
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.navbar')) {
-                navLinks.classList.remove('active');
-            }
-        });
-    </script>
+    <!-- Bootstrap JS Bundle (with Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 </body>
 </html>
