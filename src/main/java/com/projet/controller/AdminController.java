@@ -2,6 +2,7 @@ package com.projet.controller;
 
 import com.projet.entity.Penalite;
 import com.projet.entity.Pret;
+import com.projet.entity.Prolongement;
 import com.projet.entity.Reservation;
 import com.projet.entity.TypePret;
 import com.projet.entity.Status;
@@ -32,6 +33,12 @@ public class AdminController {
 
     @Autowired
     private ReservationService reservationService;
+
+    @Autowired
+    private ProlongementService prolongementService;
+
+    @Autowired
+    private StatusService statusService;
 
     @PostMapping("/login")
     public String login(@RequestParam("nom") String nom,
@@ -129,4 +136,64 @@ public class AdminController {
         return "Admin/Reservation";
     }
    
+
+      @GetMapping("/prolongation")
+    public String afficherProlongements(Model model) {
+        List<Prolongement> prolongements = prolongementService.findAll();
+        model.addAttribute("prolongements", prolongements);
+        return "Admin/prolongement_list";
+    }
+
+
+    
+    // Accepter une demande de prolongement (statut = confirmée)
+    @PostMapping("/accepter_prolongement")
+    public String accepterProlongement(@RequestParam("idProlongement") int idProlongement, Model model) {
+        Prolongement prolongement = prolongementService.findById(idProlongement).orElse(null);
+        if (prolongement == null) {
+            model.addAttribute("erreur", "Prolongement introuvable.");
+        } else {
+            // Mettre à jour le statut à "confirmée"
+            Status statusConfirmee = statusService.findAll().stream()
+                .filter(s -> s.getNomStatus().equalsIgnoreCase("Confirme") || s.getNomStatus().equalsIgnoreCase("Confirmée"))
+                .findFirst().orElse(null);
+            if (statusConfirmee == null) {
+                model.addAttribute("erreur", "Le statut 'Confirmée' n'existe pas.");
+            } else {
+                prolongement.setStatus(statusConfirmee);
+                prolongementService.save(prolongement);
+                // Mettre à jour la date de fin du prêt
+                Pret pret = prolongement.getPret();
+                pret.setDateFin(prolongement.getDateProlongement());
+                pretService.save(pret);
+                model.addAttribute("message", "Prolongement accepté et date de fin du prêt mise à jour.");
+            }
+        }
+        List<Prolongement> prolongements = prolongementService.findAll();
+        model.addAttribute("prolongements", prolongements);
+        return "Admin/prolongement_list";
+    }
+
+    // Refuser une demande de prolongement (statut = annulée)
+    @PostMapping("/refuser_prolongement")
+    public String refuserProlongement(@RequestParam("idProlongement") int idProlongement, Model model) {
+        Prolongement prolongement = prolongementService.findById(idProlongement).orElse(null);
+        if (prolongement == null) {
+            model.addAttribute("erreur", "Prolongement introuvable.");
+        } else {
+            Status statusAnnulee = statusService.findAll().stream()
+                .filter(s -> s.getNomStatus().equalsIgnoreCase("annulee") || s.getNomStatus().equalsIgnoreCase("Annulée"))
+                .findFirst().orElse(null);
+            if (statusAnnulee == null) {
+                model.addAttribute("erreur", "Le statut 'Annulée' n'existe pas.");
+            } else {
+                prolongement.setStatus(statusAnnulee);
+                prolongementService.save(prolongement);
+                model.addAttribute("message", "Prolongement refusé.");
+            }
+        }
+        List<Prolongement> prolongements = prolongementService.findAll();
+        model.addAttribute("prolongements", prolongements);
+        return "Admin/prolongement_list";
+    }
 }
