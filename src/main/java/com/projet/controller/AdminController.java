@@ -40,6 +40,12 @@ public class AdminController {
     @Autowired
     private StatusService statusService;
 
+    @Autowired
+    private LivreService livreService;
+
+    @Autowired
+    private ExemplaireService exemplaireService;
+
     @PostMapping("/login")
     public String login(@RequestParam("nom") String nom,
                         @RequestParam("mdp") String mdp,
@@ -203,4 +209,86 @@ public class AdminController {
         model.addAttribute("penalites", penalites);
         return "Admin/penalite_list";
     }
+
+    @GetMapping("/livre_list")
+    public String afficherListeLivres(Model model) {
+        model.addAttribute("livres", livreService.findAll());
+        return "Admin/livre_list";
+    }
+
+    @GetMapping("/livre_detail")
+    public String afficherDetailLivre(@RequestParam("id") int id, Model model) {
+        var livreOpt = livreService.findById(id);
+        if (livreOpt.isPresent()) {
+            var livre = livreOpt.get();
+            model.addAttribute("livre", livre);
+            // Correction : filtrer les exemplaires du livre côté Java
+            var allExemplaires = exemplaireService.getAllExemplairesAvecLivre();
+            java.util.List<com.projet.entity.Exemplaire> exemplairesLivre = new java.util.ArrayList<>();
+            java.util.Map<Integer, Integer> restantDispoMap = new java.util.HashMap<>();
+            for (var ex : allExemplaires) {
+                if (ex.getLivre() != null && ex.getLivre().getIdLivre() == livre.getIdLivre()) {
+                    exemplairesLivre.add(ex);
+                }
+            }
+            // Calcul du restant disponible pour chaque exemplaire
+            java.util.List<com.projet.entity.Pret> allPrets = pretService.findAll();
+            for (var ex : exemplairesLivre) {
+                int nbPretsNonRendus = 0;
+                for (var pret : allPrets) {
+                    if (pret.getExemplaire() != null && pret.getExemplaire().getIdExemplaire() == ex.getIdExemplaire() && pret.getRendu() == 0) {
+                        nbPretsNonRendus++;
+                    }
+                }
+                int restant = ex.getDisponible() - nbPretsNonRendus;
+                if (restant < 0) restant = 0;
+                restantDispoMap.put(ex.getIdExemplaire(), restant);
+            }
+            model.addAttribute("exemplaires", exemplairesLivre);
+            model.addAttribute("restantDispoMap", restantDispoMap);
+        } else {
+            model.addAttribute("error", "Livre non trouvé");
+        }
+        return "Admin/livre_detail";
+    }
+
+
+    @GetMapping("/livre_detail_json")
+    @ResponseBody
+    public java.util.Map<String, Object> getLivreDetailJson(@RequestParam("id") int id) {
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        var livreOpt = livreService.findById(id);
+        if (livreOpt.isPresent()) {
+            var livre = livreOpt.get();
+            result.put("id", livre.getIdLivre());
+            result.put("titre", livre.getTitre());
+            result.put("isbn", livre.getIsbn());
+            result.put("langue", livre.getLangue());
+            result.put("anneePublication", livre.getAnneePublication());
+            result.put("nbPage", livre.getNbPage());
+            result.put("synopsis", livre.getSynopsis());
+            if (livre.getAuteur() != null) {
+                var auteur = new java.util.HashMap<String, Object>();
+                auteur.put("nom", livre.getAuteur().getNomAuteur());
+                auteur.put("prenom", livre.getAuteur().getPrenomAuteur());
+                result.put("auteur", auteur);
+            }
+            // Exemplaires
+            var exemplaires = exemplaireService.findByLivreIdLivre(livre.getIdLivre());
+            java.util.List<java.util.Map<String, Object>> exList = new java.util.ArrayList<>();
+            for (var ex : exemplaires) {
+                var exMap = new java.util.HashMap<String, Object>();
+                exMap.put("idExemplaire", ex.getIdExemplaire());
+                exMap.put("disponible", ex.getDisponible());
+                exList.add(exMap);
+            }
+            result.put("exemplaires", exList);
+        } else {
+            result.put("error", "Livre non trouvé");
+        }
+        return result;
+    }
+
+
+
 }
