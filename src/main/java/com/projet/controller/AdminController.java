@@ -196,4 +196,11 @@ public class AdminController {
         model.addAttribute("prolongements", prolongements);
         return "Admin/prolongement_list";
     }
+
+    @GetMapping("/penalites")
+    public String afficherPenalites(Model model) {
+        List<Penalite> penalites = penaliteService.findAll();
+        model.addAttribute("penalites", penalites);
+        return "Admin/penalite_list";
+    }
 }

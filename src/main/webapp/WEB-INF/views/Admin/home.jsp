@@ -154,6 +154,9 @@
                         <a class="nav-link" href="prolongation">Liste prolonger</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="penalites">Pénalités</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="#contact">Contact</a>
                     </li>
                 </ul>
