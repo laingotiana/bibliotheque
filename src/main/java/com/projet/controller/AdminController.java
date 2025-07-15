@@ -1,5 +1,6 @@
 package com.projet.controller;
 
+import com.projet.entity.Adherant;
 import com.projet.entity.Penalite;
 import com.projet.entity.Pret;
 import com.projet.entity.Prolongement;
@@ -45,6 +46,10 @@ public class AdminController {
 
     @Autowired
     private ExemplaireService exemplaireService;
+
+    
+    @Autowired
+    private AdherantService adherantService;
 
     @PostMapping("/login")
     public String login(@RequestParam("nom") String nom,
@@ -214,6 +219,13 @@ public class AdminController {
     public String afficherListeLivres(Model model) {
         model.addAttribute("livres", livreService.findAll());
         return "Admin/livre_list";
+    }
+
+    @GetMapping("/adherent_list")
+    public String afficherListeAdherents(Model model) {
+        List<Adherant> adherants = adherantService.findAll();
+        model.addAttribute("adherants", adherants);
+        return "Admin/adherent_list";
     }
 
     @GetMapping("/livre_detail")
