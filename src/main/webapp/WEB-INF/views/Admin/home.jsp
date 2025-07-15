@@ -160,7 +160,7 @@
                         <a class="nav-link" href="livre_list">Listes livres</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#contact">Contact</a>
+                        <a class="nav-link" href="adherent_list">Liste-adherants</a>
                     </li>
                 </ul>
             </div>
