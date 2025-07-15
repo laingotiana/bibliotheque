@@ -29,4 +29,8 @@ public class PenaliteService {
     public void deleteById(int id) {
         penaliteRepository.deleteById(id);
     }
+
+    public List<Penalite> findByAdherantId(int adherantId) {
+        return penaliteRepository.findByAdherantId(adherantId);
+    }
 }

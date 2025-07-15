@@ -1,5 +1,6 @@
 package com.projet.controller;
 
+import com.projet.entity.Abonnement;
 import com.projet.entity.Adherant;
 import com.projet.entity.Penalite;
 import com.projet.entity.Pret;
@@ -47,9 +48,11 @@ public class AdminController {
     @Autowired
     private ExemplaireService exemplaireService;
 
-    
     @Autowired
     private AdherantService adherantService;
+
+    @Autowired
+    private AbonnementService abonnementService;
 
     @PostMapping("/login")
     public String login(@RequestParam("nom") String nom,
@@ -227,6 +230,80 @@ public class AdminController {
         model.addAttribute("adherants", adherants);
         return "Admin/adherent_list";
     }
+
+    @GetMapping("/adherent_detail")
+    public String afficherDetailAdherent(@RequestParam("id") int id, Model model) {
+        var adherantOpt = adherantService.findById(id);
+        if (adherantOpt.isEmpty()) {
+            model.addAttribute("error", "Adhérent non trouvé");
+            return "Admin/adherent_detail";
+        }
+
+        Adherant adherant = adherantOpt.get();
+        model.addAttribute("adherant", adherant);
+
+        // Quota de prêts
+        int quotaPretTotal = adherant.getProfil() != null ? adherant.getProfil().getQuotaPret() : 0;
+        List<Pret> pretsActifs = pretService.findByAdherant(adherant).stream()
+            .filter(p -> p.getRendu() == 0)
+            .toList();
+        int quotaPretRestant = quotaPretTotal - pretsActifs.size();
+        model.addAttribute("quotaPretTotal", quotaPretTotal);
+        model.addAttribute("quotaPretRestant", Math.max(0, quotaPretRestant));
+
+        // Quota de réservations
+        int quotaReservationTotal = adherant.getProfil() != null ? adherant.getProfil().getQuotaReservation() : 0;
+        List<Reservation> reservationsActives = reservationService.findByAdherantId(id).stream()
+            .filter(r -> r.getStatus() != null && 
+                (r.getStatus().getNomStatus().equalsIgnoreCase("en attente") || 
+                 r.getStatus().getNomStatus().equalsIgnoreCase("confirmée")))
+            .toList();
+        int quotaReservationRestant = quotaReservationTotal - reservationsActives.size();
+        model.addAttribute("quotaReservationTotal", quotaReservationTotal);
+        model.addAttribute("quotaReservationRestant", Math.max(0, quotaReservationRestant));
+
+        // Abonnements
+        List<Abonnement> abonnements = abonnementService.findByAdherantId(id);
+        model.addAttribute("abonnements", abonnements);
+
+        // Pénalités
+        List<Penalite> penalites = penaliteService.findByAdherantId(id);
+        model.addAttribute("penalites", penalites);
+
+        return "Admin/adherent_detail";
+    }
+
+    // @GetMapping("/adherent_detail")
+    // public String afficherDetailAdherent(@RequestParam("id") int id, Model model) {
+    //     var adherantOpt = adherantService.findById(id);
+    //     if (adherantOpt.isEmpty()) {
+    //         model.addAttribute("error", "Adhérent non trouvé");
+    //         return "Admin/adherent_detail";
+    //     }
+
+    //     Adherant adherant = adherantOpt.get();
+    //     model.addAttribute("adherant", adherant);
+
+    //     // Quota total et restant
+    //     int quotaTotal = adherant.getProfil() != null ? adherant.getProfil().getQuotaPret() : 0;
+    //     List<Pret> pretsActifs = pretService.findByAdherant(adherant).stream()
+    //         .filter(p -> p.getRendu() == 0)
+    //         .toList();
+    //     int quotaRestant = quotaTotal - pretsActifs.size();
+    //     model.addAttribute("quotaTotal", quotaTotal);
+    //     model.addAttribute("quotaRestant", Math.max(0, quotaRestant));
+
+    //     // Abonnements
+    //     List<Abonnement> abonnements = abonnementService.findByAdherantId(id);
+    //     model.addAttribute("abonnements", abonnements);
+
+    //     // Pénalités
+    //     List<Penalite> penalites = penaliteService.findByAdherantId(id);
+    //     model.addAttribute("penalites", penalites);
+
+    //     return "Admin/adherent_detail";
+    // }
+
 
     @GetMapping("/livre_detail")
     public String afficherDetailLivre(@RequestParam("id") int id, Model model) {
