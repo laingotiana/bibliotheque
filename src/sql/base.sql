@@ -87,3 +87,9 @@ INSERT INTO categorie_livre (id_livre, id_categorie) VALUES
 (2, 2),
 (3, 1),
 (4, 4);
+
+
+INSERT INTO abonnement (id_abonnement, dateDebut, dateFin, id_adherent) VALUES
+(1, '2025-01-01', '2025-7-20', 1),
+(2, '2025-03-15', '2026-03-14', 2),
+(3, '2025-06-01', '2025-11-30', 3);

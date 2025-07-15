@@ -14,6 +14,10 @@ public class ExemplaireService {
     @Autowired
     private ExemplaireRepository exemplaireRepository;
 
+    public List<Exemplaire> findByLivreIdLivre(int idLivre) {
+        return exemplaireRepository.findByLivreIdLivre(idLivre);
+    }
+
     public List<Exemplaire> findAll() {
         return exemplaireRepository.findAll();
     }

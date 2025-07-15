@@ -82,6 +82,12 @@ CREATE TABLE pret(
    FOREIGN KEY(id_adherent) REFERENCES adherant(id_adherent),
    FOREIGN KEY(id_exemplaire) REFERENCES exemplaire(id_exemplaire)
 );
+ALTER TABLE pret ADD COLUMN date_rendu DATE DEFAULT NULL;
+-- ALTER TABLE pret MODIFY COLUMN rendu BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE pret
+DROP COLUMN date_debut;
+ALTER TABLE pret
+DROP COLUMN date_fin;
 
 CREATE TABLE reservation(
    id_reservation INT,
@@ -124,4 +130,13 @@ CREATE TABLE categorie_livre(
    PRIMARY KEY(id_livre, id_categorie),
    FOREIGN KEY(id_livre) REFERENCES livre(id_livre),
    FOREIGN KEY(id_categorie) REFERENCES categorie(id_categorie)
+);
+
+CREATE TABLE abonnement(
+   id_abonnement INT,
+   dateDebut DATE,
+   dateFin DATE,
+   id_adherent INT NOT NULL,
+   PRIMARY KEY(id_abonnement),
+   FOREIGN KEY(id_adherent) REFERENCES adherant(id_adherent)
 );

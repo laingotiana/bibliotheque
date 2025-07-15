@@ -12,5 +12,6 @@ import java.util.*;
 public interface ExemplaireRepository extends JpaRepository<Exemplaire, Integer> {
    @Query("SELECT e FROM Exemplaire e JOIN FETCH e.livre")
     List<Exemplaire> findAllWithLivre();
-    
+    List<Exemplaire> findAllByOrderByIdExemplaireAsc();
+    List<Exemplaire> findByLivreIdLivre(int idLivre);
 }
