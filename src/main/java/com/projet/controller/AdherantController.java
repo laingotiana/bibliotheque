@@ -9,6 +9,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpSession;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.text.ParseException;
@@ -187,28 +188,103 @@ public class AdherantController {
                                    Model model,
                                    HttpSession session) {
         try {
+            // Vérification de la session
             Integer adherantId = (Integer) session.getAttribute("adherantId");
             if (adherantId == null) {
                 model.addAttribute("erreur", "Vous devez être connecté pour effectuer une réservation.");
                 return "Adherant/reservation";
             }
             Adherant adherant = adherantService.findById(adherantId).orElse(null);
+            if (adherant == null) {
+                model.addAttribute("erreur", "Adhérent non trouvé.");
+                return "Adherant/reservation";
+            }
+
+            // Vérification de l'exemplaire
             Exemplaire exemplaire = exemplaireService.findById(idExemplaire).orElse(null);
+            if (exemplaire == null) {
+                model.addAttribute("erreur", "Exemplaire non trouvé.");
+                return "Adherant/reservation";
+            }
+
+            // Vérification du statut
             Status status = statusService.findAll().stream()
                 .filter(s -> s.getNomStatus().equalsIgnoreCase("en attent") || s.getNomStatus().equalsIgnoreCase("En attente"))
                 .findFirst()
                 .orElse(null);
-
             if (status == null) {
-                model.addAttribute("erreur", "Le status 'en attent' n'existe pas.");
+                model.addAttribute("erreur", "Le statut 'en attente' n'existe pas.");
                 model.addAttribute("exemplaires", exemplaireService.getAllExemplairesAvecLivre());
                 return "Adherant/reservation";
             }
 
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            Date dateDebutPret = sdf.parse(dateDebutPretStr);
-            Date dateFinPret = sdf.parse(dateFinPretStr);
+            // Validation des chaînes de dates
+            if (dateDebutPretStr == null || dateDebutPretStr.trim().isEmpty() || dateFinPretStr == null || dateFinPretStr.trim().isEmpty()) {
+                model.addAttribute("erreur", "Les dates de début et de fin doivent être fournies.");
+                return "Adherant/reservation";
+            }
 
+            // Parsing des dates
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            sdf.setLenient(false);
+            Date dateDebutPret;
+            Date dateFinPret;
+            try {
+                dateDebutPret = sdf.parse(dateDebutPretStr);
+                dateFinPret = sdf.parse(dateFinPretStr);
+            } catch (ParseException e) {
+                model.addAttribute("erreur", "Format de date invalide. Utilisez le format AAAA-MM-JJ.");
+                return "Adherant/reservation";
+            }
+
+            // Validation des dates
+            if (dateDebutPret.after(dateFinPret)) {
+                model.addAttribute("erreur", "La date de début ne peut pas être après la date de fin.");
+                return "Adherant/reservation";
+            }
+
+            // Vérification de l'abonnement
+            List<Abonnement> abonnements = abonnementService.findByAdherantId(adherantId);
+            if (abonnements == null || abonnements.isEmpty()) {
+                model.addAttribute("erreur", "Aucun abonnement actif trouvé pour cet adhérent.");
+                return "Adherant/reservation";
+            }
+
+            // Normalisation des dates pour ignorer l'heure
+            Calendar calDebutPret = Calendar.getInstance();
+            calDebutPret.setTime(dateDebutPret);
+            resetTime(calDebutPret);
+
+            Calendar calFinPret = Calendar.getInstance();
+            calFinPret.setTime(dateFinPret);
+            resetTime(calFinPret);
+
+            boolean hasValidAbonnement = abonnements.stream().anyMatch(abonnement -> {
+                if (abonnement.getDateDebut() == null || abonnement.getDateFin() == null) {
+                    System.out.println("Abonnement ignoré : dates null.");
+                    return false;
+                }
+                Calendar calDebutAbonnement = Calendar.getInstance();
+                calDebutAbonnement.setTime(abonnement.getDateDebut());
+                resetTime(calDebutAbonnement);
+
+                Calendar calFinAbonnement = Calendar.getInstance();
+                calFinAbonnement.setTime(abonnement.getDateFin());
+                resetTime(calFinAbonnement);
+
+                System.out.println("Vérification abonnement pour réservation : Réservation de " + sdf.format(dateDebutPret) + " à " + sdf.format(dateFinPret));
+                System.out.println("Abonnement de " + sdf.format(abonnement.getDateDebut()) + " à " + sdf.format(abonnement.getDateFin()));
+
+                return (!calDebutPret.before(calDebutAbonnement) || calDebutPret.equals(calDebutAbonnement)) &&
+                       (!calFinPret.after(calFinAbonnement) || calFinPret.equals(calFinAbonnement));
+            });
+
+            if (!hasValidAbonnement) {
+                model.addAttribute("erreur", "Les dates de la réservation ne sont pas dans la période d'un abonnement actif.");
+                return "Adherant/reservation";
+            }
+
+            // Création de la réservation
             Reservation reservation = new Reservation();
             reservation.setAdherant(adherant);
             reservation.setExemplaire(exemplaire);
@@ -221,7 +297,8 @@ public class AdherantController {
 
             model.addAttribute("message", "Réservation effectuée avec succès !");
         } catch (Exception e) {
-            model.addAttribute("erreur", "Erreur lors de la réservation.");
+            model.addAttribute("erreur", "Erreur lors de la réservation : " + e.getMessage());
+            e.printStackTrace();
         }
 
         model.addAttribute("exemplaires", exemplaireService.getAllExemplairesAvecLivre());
@@ -234,6 +311,7 @@ public class AdherantController {
                                Model model,
                                HttpSession session) {
         try {
+            // Vérification de la session
             Integer adherantId = (Integer) session.getAttribute("adherantId");
             if (adherantId == null) {
                 model.addAttribute("erreur", "Vous devez être connecté pour demander un prolongement.");
@@ -254,26 +332,72 @@ public class AdherantController {
                 return "Adherant/pret_list";
             }
             List<Prolongement> prolongements = prolongementService.findAll();
-            boolean dejaEnAttente = prolongements.stream().anyMatch(p -> p.getPret().getIdPret() == pretId && (p.getStatus().getNomStatus().equalsIgnoreCase("en attent") || p.getStatus().getNomStatus().equalsIgnoreCase("En attente")));
+            boolean dejaEnAttente = prolongements.stream().anyMatch(p -> p.getPret().getIdPret() == pretId && 
+                (p.getStatus().getNomStatus().equalsIgnoreCase("en attent") || p.getStatus().getNomStatus().equalsIgnoreCase("En attente")));
             if (dejaEnAttente) {
                 model.addAttribute("erreur", "Une demande de prolongement est déjà en attente pour ce prêt.");
                 return "Adherant/pret_list";
             }
-            List<Reservation> reservations = reservationService.findByExemplaireId(pret.getExemplaire().getIdExemplaire());
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            Date dateProlongementStr = sdf.parse(dateProlongement);
-            boolean reservationEnConflit = reservations.stream().anyMatch(r -> r.getDateDebutPret() != null && r.getDateFinPret() != null &&
-                ((dateProlongementStr.after(r.getDateDebutPret()) && dateProlongementStr.before(r.getDateFinPret())) || dateProlongementStr.equals(r.getDateDebutPret()) || dateProlongementStr.equals(r.getDateFinPret())) &&
-                (r.getStatus().getNomStatus().equalsIgnoreCase("confirmee") || r.getStatus().getNomStatus().equalsIgnoreCase("Confirmée"))
-            );
-            if (reservationEnConflit) {
-                model.addAttribute("erreur", "Impossible de prolonger : une réservation existe sur cet exemplaire à la date demandée.");
+            sdf.setLenient(false);
+            Date dateProlongementStr;
+            try {
+                dateProlongementStr = sdf.parse(dateProlongement);
+            } catch (ParseException e) {
+                model.addAttribute("erreur", "Format de date de prolongement invalide. Utilisez le format AAAA-MM-JJ.");
                 return "Adherant/pret_list";
             }
+            // Vérification de la date de prolongement
             if (!dateProlongementStr.after(pret.getDateFin())) {
                 model.addAttribute("erreur", "La date de prolongement doit être après la date de fin actuelle.");
                 return "Adherant/pret_list";
             }
+            // Vérification des réservations en conflit
+            List<Reservation> reservations = reservationService.findByExemplaireId(pret.getExemplaire().getIdExemplaire());
+            boolean reservationEnConflit = reservations.stream().anyMatch(r -> r.getDateDebutPret() != null && r.getDateFinPret() != null &&
+                ((dateProlongementStr.after(r.getDateDebutPret()) && dateProlongementStr.before(r.getDateFinPret())) || 
+                 dateProlongementStr.equals(r.getDateDebutPret()) || dateProlongementStr.equals(r.getDateFinPret())) &&
+                (r.getStatus().getNomStatus().equalsIgnoreCase("confirmee") || r.getStatus().getNomStatus().equalsIgnoreCase("Confirmée")));
+            if (reservationEnConflit) {
+                model.addAttribute("erreur", "Impossible de prolonger : une réservation existe sur cet exemplaire à la date demandée.");
+                return "Adherant/pret_list";
+            }
+            // Vérification de l'abonnement
+            List<Abonnement> abonnements = abonnementService.findByAdherantId(adherantId);
+            if (abonnements == null || abonnements.isEmpty()) {
+                model.addAttribute("erreur", "Aucun abonnement actif trouvé pour cet adhérent.");
+                return "Adherant/pret_list";
+            }
+            Calendar calProlongement = Calendar.getInstance();
+            calProlongement.setTime(dateProlongementStr);
+            resetTime(calProlongement);
+
+            boolean hasValidAbonnement = abonnements.stream().anyMatch(abonnement -> {
+                if (abonnement.getDateDebut() == null || abonnement.getDateFin() == null) {
+                    System.out.println("Abonnement ignoré : dates null.");
+                    return false;
+                }
+                Calendar calDebutAbonnement = Calendar.getInstance();
+                calDebutAbonnement.setTime(abonnement.getDateDebut());
+                resetTime(calDebutAbonnement);
+
+                Calendar calFinAbonnement = Calendar.getInstance();
+                calFinAbonnement.setTime(abonnement.getDateFin());
+                resetTime(calFinAbonnement);
+
+                System.out.println("Vérification abonnement pour prolongement : Date de prolongement " + sdf.format(dateProlongementStr));
+                System.out.println("Abonnement de " + sdf.format(abonnement.getDateDebut()) + " à " + sdf.format(abonnement.getDateFin()));
+
+                return (!calProlongement.before(calDebutAbonnement) || calProlongement.equals(calDebutAbonnement)) &&
+                       (!calProlongement.after(calFinAbonnement) || calProlongement.equals(calFinAbonnement));
+            });
+
+            if (!hasValidAbonnement) {
+                model.addAttribute("erreur", "La date de prolongement n'est pas dans la période d'un abonnement actif.");
+                return "Adherant/pret_list";
+            }
+
+            // Création du prolongement
             Prolongement prolongement = new Prolongement();
             prolongement.setPret(pret);
             prolongement.setDateProlongement(dateProlongementStr);
@@ -335,5 +459,13 @@ public class AdherantController {
         List<Reservation> reservations = reservationService.findByAdherantId(adherantId);
         model.addAttribute("reservations", reservations);
         return "Adherant/reservation_list";
+    }
+
+    // Méthode utilitaire pour réinitialiser l'heure à 00:00:00
+    private void resetTime(Calendar calendar) {
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
     }
 }
