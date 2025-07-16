@@ -190,14 +190,10 @@
                                             </c:when>
                                             <c:when test="${pret.rendu == 0}">
                                                 <span class="status-pending">En cours de lecture</span>
-                                                <form action="prolonger" method="post" style="display: inline;">
-                                                    <input type="hidden" name="pretId" value="${pret.idPret}">
-                                                    <c:set var="today" value="<%= new java.util.Date() %>"/>
-                                                    <input type="date" id="date_rendu_${pret.idPret}" name="dateProlongement" 
-                                                           value="<fmt:formatDate value='${today}' pattern='yyyy-MM-dd'/>"
-                                                    >
-                                                    <button type="submit" class="action-button">Prolonger</button>
-                                                </form>
+                                                <form action="prolonger" method="post" style="display:inline;">
+                                                <input type="hidden" name="pretId" value="${pret.idPret}">
+                                                <button type="submit" class="link-pret">Prolonger</button>
+                                            </form>
                                             </c:when>
                                             <c:otherwise>
                                                 <span class="status-pending">En cours de lecture</span>

@@ -140,3 +140,8 @@ CREATE TABLE abonnement(
    PRIMARY KEY(id_abonnement),
    FOREIGN KEY(id_adherent) REFERENCES adherant(id_adherent)
 );
+
+CREATE TABLE jour_ferie (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    date DATE NOT NULL UNIQUE
+);

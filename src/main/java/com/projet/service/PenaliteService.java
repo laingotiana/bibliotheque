@@ -1,10 +1,12 @@
 package com.projet.service;
 
+import com.projet.entity.Adherant;
 import com.projet.entity.Penalite;
 import com.projet.repository.PenaliteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,5 +34,11 @@ public class PenaliteService {
 
     public List<Penalite> findByAdherantId(int adherantId) {
         return penaliteRepository.findByAdherantId(adherantId);
+    }
+
+    public List<Penalite> findByAdherantAndDebutPenaliteLessThanEqualAndFinPenaliteGreaterThanEqual(
+        Adherant adherant, Date debutPenalite, Date finPenalite) {
+        return penaliteRepository.findByAdherantAndDebutPenaliteLessThanEqualAndFinPenaliteGreaterThanEqual(
+            adherant, debutPenalite, finPenalite);
     }
 }

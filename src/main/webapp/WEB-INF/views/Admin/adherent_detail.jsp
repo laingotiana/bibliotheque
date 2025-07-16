@@ -75,7 +75,6 @@
                             <tr>
                                 <td><fmt:formatDate value="${penalite.debutPenalite}" pattern="yyyy-MM-dd" /></td>
                                 <td><fmt:formatDate value="${penalite.finPenalite}" pattern="yyyy-MM-dd" /></td>
-                                <td><c:out value="${penalite.raison}" default="N/A" /></td>
                             </tr>
                         </c:forEach>
                     </tbody>

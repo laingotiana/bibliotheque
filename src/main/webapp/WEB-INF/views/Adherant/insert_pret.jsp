@@ -47,7 +47,7 @@
             </select>
         </div>
         <div class="form-group">
-            <label for="date_debut">Date de Début :</label>
+            <label for="date_debut">Date de pret :</label>
             <input type="date" name="date_debut" id="date_debut" required>
         </div>
         <button type="submit" class="btn-submit">Insérer Prêt</button>

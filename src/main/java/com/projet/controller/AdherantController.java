@@ -41,6 +41,9 @@ public class AdherantController {
     @Autowired
     private AbonnementService abonnementService;
 
+    @Autowired
+    private JourFerieService jourFerieService;
+
     @PostMapping("/adherent_login")
     public String login(@RequestParam("nom") String nom,
                         @RequestParam("password") String password,
@@ -157,8 +160,7 @@ public class AdherantController {
     //     return "Adherant/insert_pret";
     // }
 
-
-    @PostMapping("/insert_pret")
+ @PostMapping("/insert_pret")
     public String insertPret(@RequestParam("id_exemplaire") int idExemplaire,
                             @RequestParam("id_type") int idType,
                             @RequestParam("date_debut") String dateDebutStr,
@@ -203,8 +205,20 @@ public class AdherantController {
             Date dateDebut;
             try {
                 dateDebut = sdf.parse(dateDebutStr);
-            } catch (ParseException e) {
+            } catch (Exception e) {
                 model.addAttribute("erreur", "Format de date invalide. Utilisez le format AAAA-MM-JJ.");
+                return "Adherant/insert_pret";
+            }
+
+            // Vérification si date_debut est un dimanche ou un jour férié
+            Calendar calDebut = Calendar.getInstance();
+            calDebut.setTime(dateDebut);
+            if (calDebut.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
+                model.addAttribute("erreur", "Les prêts ne sont pas autorisés le dimanche.");
+                return "Adherant/insert_pret";
+            }
+            if (jourFerieService.isJourFerie(dateDebut)) {
+                model.addAttribute("erreur", "Les prêts ne sont pas autorisés les jours fériés.");
                 return "Adherant/insert_pret";
             }
 
@@ -400,10 +414,7 @@ public class AdherantController {
     }
 
     @PostMapping("/prolonger")
-    public String prolongerPret(@RequestParam("pretId") int pretId,
-                               @RequestParam("dateProlongement") String dateProlongement,
-                               Model model,
-                               HttpSession session) {
+    public String prolongerPret(@RequestParam("pretId") int pretId, Model model, HttpSession session) {
         try {
             // Vérification de la session
             Integer adherantId = (Integer) session.getAttribute("adherantId");
@@ -426,45 +437,60 @@ public class AdherantController {
                 return "Adherant/pret_list";
             }
             List<Prolongement> prolongements = prolongementService.findAll();
-            boolean dejaEnAttente = prolongements.stream().anyMatch(p -> p.getPret().getIdPret() == pretId && 
-                (p.getStatus().getNomStatus().equalsIgnoreCase("en attent") || p.getStatus().getNomStatus().equalsIgnoreCase("En attente")));
+            boolean dejaEnAttente = prolongements.stream().anyMatch(p -> p.getPret().getIdPret() == pretId &&
+                (p.getStatus().getNomStatus().equalsIgnoreCase("en attente") || p.getStatus().getNomStatus().equalsIgnoreCase("En attente")));
             if (dejaEnAttente) {
                 model.addAttribute("erreur", "Une demande de prolongement est déjà en attente pour ce prêt.");
                 return "Adherant/pret_list";
             }
+
+            // Vérification du quota de prolongement
+            if (adherant.getProfil() == null) {
+                model.addAttribute("erreur", "Aucun profil associé à l'adhérent.");
+                return "Adherant/pret_list";
+            }
+            int quotaProlongement = adherant.getProfil().getQuotaProlongement();
+            long nbProlongements = prolongements.stream()
+                .filter(p -> p.getPret().getIdPret() == pretId &&
+                    (p.getStatus().getNomStatus().equalsIgnoreCase("approuvé") || p.getStatus().getNomStatus().equalsIgnoreCase("Approuvé")))
+                .count();
+            if (nbProlongements >= quotaProlongement) {
+                model.addAttribute("erreur", "Quota de prolongements atteint (" + nbProlongements + "/" + quotaProlongement + ").");
+                return "Adherant/pret_list";
+            }
+
+            // Calcul de la date de prolongement et de la nouvelle date de fin
+            Date dateProlongement = new Date(); // Date actuelle
+            int jourPret = adherant.getProfil().getJourPret();
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(dateProlongement);
+            calendar.add(Calendar.DAY_OF_MONTH, jourPret);
+            Date nouvelleDateFin = calendar.getTime();
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            sdf.setLenient(false);
-            Date dateProlongementStr;
-            try {
-                dateProlongementStr = sdf.parse(dateProlongement);
-            } catch (ParseException e) {
-                model.addAttribute("erreur", "Format de date de prolongement invalide. Utilisez le format AAAA-MM-JJ.");
-                return "Adherant/pret_list";
-            }
-            // Vérification de la date de prolongement
-            if (!dateProlongementStr.after(pret.getDateFin())) {
-                model.addAttribute("erreur", "La date de prolongement doit être après la date de fin actuelle.");
-                return "Adherant/pret_list";
-            }
+
             // Vérification des réservations en conflit
             List<Reservation> reservations = reservationService.findByExemplaireId(pret.getExemplaire().getIdExemplaire());
             boolean reservationEnConflit = reservations.stream().anyMatch(r -> r.getDateDebutPret() != null && r.getDateFinPret() != null &&
-                ((dateProlongementStr.after(r.getDateDebutPret()) && dateProlongementStr.before(r.getDateFinPret())) || 
-                 dateProlongementStr.equals(r.getDateDebutPret()) || dateProlongementStr.equals(r.getDateFinPret())) &&
+                ((nouvelleDateFin.after(r.getDateDebutPret()) && nouvelleDateFin.before(r.getDateFinPret())) ||
+                 nouvelleDateFin.equals(r.getDateDebutPret()) || nouvelleDateFin.equals(r.getDateFinPret())) &&
                 (r.getStatus().getNomStatus().equalsIgnoreCase("confirmee") || r.getStatus().getNomStatus().equalsIgnoreCase("Confirmée")));
             if (reservationEnConflit) {
                 model.addAttribute("erreur", "Impossible de prolonger : une réservation existe sur cet exemplaire à la date demandée.");
                 return "Adherant/pret_list";
             }
-            // Vérification de l'abonnement
+
+            // Vérification de l'abonnement pour la période de prolongement
             List<Abonnement> abonnements = abonnementService.findByAdherantId(adherantId);
             if (abonnements == null || abonnements.isEmpty()) {
                 model.addAttribute("erreur", "Aucun abonnement actif trouvé pour cet adhérent.");
                 return "Adherant/pret_list";
             }
             Calendar calProlongement = Calendar.getInstance();
-            calProlongement.setTime(dateProlongementStr);
+            calProlongement.setTime(dateProlongement);
             resetTime(calProlongement);
+            Calendar calNouvelleFinPret = Calendar.getInstance();
+            calNouvelleFinPret.setTime(nouvelleDateFin);
+            resetTime(calNouvelleFinPret);
 
             boolean hasValidAbonnement = abonnements.stream().anyMatch(abonnement -> {
                 if (abonnement.getDateDebut() == null || abonnement.getDateFin() == null) {
@@ -474,35 +500,38 @@ public class AdherantController {
                 Calendar calDebutAbonnement = Calendar.getInstance();
                 calDebutAbonnement.setTime(abonnement.getDateDebut());
                 resetTime(calDebutAbonnement);
-
                 Calendar calFinAbonnement = Calendar.getInstance();
                 calFinAbonnement.setTime(abonnement.getDateFin());
                 resetTime(calFinAbonnement);
 
-                System.out.println("Vérification abonnement pour prolongement : Date de prolongement " + sdf.format(dateProlongementStr));
+                System.out.println("Vérification abonnement pour prolongement : Période de " + sdf.format(dateProlongement) + " à " + sdf.format(nouvelleDateFin));
                 System.out.println("Abonnement de " + sdf.format(abonnement.getDateDebut()) + " à " + sdf.format(abonnement.getDateFin()));
 
                 return (!calProlongement.before(calDebutAbonnement) || calProlongement.equals(calDebutAbonnement)) &&
-                       (!calProlongement.after(calFinAbonnement) || calProlongement.equals(calFinAbonnement));
+                       (!calNouvelleFinPret.after(calFinAbonnement) || calNouvelleFinPret.equals(calFinAbonnement));
             });
 
             if (!hasValidAbonnement) {
-                model.addAttribute("erreur", "La date de prolongement n'est pas dans la période d'un abonnement actif.");
+                model.addAttribute("erreur", "La période de prolongement n'est pas dans la période d'un abonnement actif.");
                 return "Adherant/pret_list";
             }
 
-            // Création du prolongement
+            // Création et validation du prolongement
             Prolongement prolongement = new Prolongement();
             prolongement.setPret(pret);
-            prolongement.setDateProlongement(dateProlongementStr);
+            prolongement.setDateProlongement(dateProlongement);
             prolongement.setAdherant(adherant);
-            Status statusEnAttente = statusService.findAll().stream()
-                .filter(s -> s.getNomStatus().equalsIgnoreCase("en attent") || s.getNomStatus().equalsIgnoreCase("En attente"))
+            Status statusApprouve = statusService.findAll().stream()
+                .filter(s -> s.getNomStatus().equalsIgnoreCase("approuvé") || s.getNomStatus().equalsIgnoreCase("Approuvé"))
                 .findFirst()
-                .orElse(new Status(1, "En attente"));
-            prolongement.setStatus(statusEnAttente);
+                .orElse(new Status(2, "Approuvé"));
+            prolongement.setStatus(statusApprouve);
+
+            // Mise à jour de la date de fin du prêt
+            pret.setDateFin(nouvelleDateFin);
+            pretService.save(pret);
             prolongementService.save(prolongement);
-            model.addAttribute("message", "Demande de prolongement envoyée avec succès !");
+            model.addAttribute("message", "Prolongement validé avec succès ! Nouvelle date de fin : " + sdf.format(nouvelleDateFin));
         } catch (Exception e) {
             model.addAttribute("erreur", "Erreur lors de la demande de prolongement : " + e.getMessage());
             e.printStackTrace();
@@ -514,7 +543,6 @@ public class AdherantController {
         }
         return "Adherant/pret_list";
     }
-
     @GetMapping("/liste_reservations")
     public String voirReservationsAdherant(HttpSession session, Model model) {
         Integer adherantId = (Integer) session.getAttribute("adherantId");

@@ -23,10 +23,16 @@ public class PretService {
     private PenaliteRepository penaliteRepository;
 
     @Autowired
+    private PenaliteService penaliteService;
+
+    @Autowired
     private AbonnementService abonnementService;
 
     @Autowired
     private ExemplaireService exemplaireService;
+
+    @Autowired
+    private JourFerieService jourFerieService;
 
     public static class PretInsertionResult {
         private boolean success;
@@ -76,7 +82,7 @@ public class PretService {
         }
 
         // Vérifier la pénalité sur la date de début du prêt
-        List<Penalite> penalites = penaliteRepository.findByAdherantAndDebutPenaliteLessThanEqualAndFinPenaliteGreaterThanEqual(
+        List<Penalite> penalites = penaliteService.findByAdherantAndDebutPenaliteLessThanEqualAndFinPenaliteGreaterThanEqual(
             adherant, pret.getDateDebut(), pret.getDateDebut()
         );
         boolean estPenalise = !penalites.isEmpty();
@@ -101,6 +107,19 @@ public class PretService {
         if (nbPretsMemeJour >= quota) {
             System.out.println("Échec : Quota de prêts pour le même jour atteint (" + nbPretsMemeJour + "/" + quota + ").");
             return new PretInsertionResult(false, "Quota de prêts pour le même jour atteint (" + nbPretsMemeJour + "/" + quota + ").");
+        }
+
+        // Vérification si date_debut est un dimanche ou un jour férié
+        Calendar calDebut = Calendar.getInstance();
+        calDebut.setTime(pret.getDateDebut());
+        resetTime(calDebut);
+        if (calDebut.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
+            System.out.println("Échec : Les prêts ne sont pas autorisés le dimanche.");
+            return new PretInsertionResult(false, "Les prêts ne sont pas autorisés le dimanche.");
+        }
+        if (jourFerieService.isJourFerie(pret.getDateDebut())) {
+            System.out.println("Échec : Les prêts ne sont pas autorisés les jours fériés.");
+            return new PretInsertionResult(false, "Les prêts ne sont pas autorisés les jours fériés.");
         }
 
         // Vérification de l'abonnement
@@ -145,7 +164,6 @@ public class PretService {
         }
 
         // Si toutes les conditions sont remplies, sauvegarder le prêt
-        // pret.getExemplaire().setDisponible(pret.getExemplaire().getDisponible() - 1);
         Exemplaire exemplaire = pret.getExemplaire();
         int nouvelleDisponibilite = exemplaire.getDisponible() - 1;
         if (nouvelleDisponibilite < 0) {

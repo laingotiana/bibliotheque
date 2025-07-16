@@ -17,6 +17,7 @@ TRUNCATE TABLE status;
 TRUNCATE TABLE profil;
 TRUNCATE TABLE auteur;
 TRUNCATE TABLE categorie;
+TRUNCATE TABLE jour_ferie;
 
 -- Réactiver les vérifications des clés étrangères
 SET FOREIGN_KEY_CHECKS = 1;
@@ -177,7 +178,7 @@ INSERT INTO adherant (id_adherent, nom, prenom, password, id_profil) VALUES
 (8, 'PROF001', 'Amina Zerouali', 'amina', 3);
 
 INSERT INTO abonnement (id_abonnement, dateDebut, dateFin, id_adherent) VALUES
-(1, '2025-02-01', '2025-07-24', 1),
+(1, '2025-02-01', '2026-07-24', 1),
 (2, '2025-02-01', '2025-07-01', 2),
 (3, '2025-04-01', '2025-12-10', 3),
 (4, '2025-07-01', '2026-07-01', 4),
@@ -206,5 +207,7 @@ INSERT INTO status (id_status, nom_status) VALUES
 INSERT INTO admin (id, nom, mdp) VALUES
 (1, 'admin1', '123');
 
-
+INSERT INTO jour_ferie (date) VALUES
+('2025-07-26'), -- Nouvel An
+('2025-07-19');
 
