@@ -19,11 +19,6 @@ CREATE TABLE profil(
    PRIMARY KEY(id_profil)
 );
 
-CREATE TABLE status(
-   id_status INT,
-   nom_status VARCHAR(50),
-   PRIMARY KEY(id_status)
-);
 
 CREATE TABLE type_pret(
    id_type INT,
@@ -84,10 +79,7 @@ CREATE TABLE pret(
 );
 ALTER TABLE pret ADD COLUMN date_rendu DATE DEFAULT NULL;
 -- ALTER TABLE pret MODIFY COLUMN rendu BOOLEAN NOT NULL DEFAULT FALSE;
-ALTER TABLE pret
-DROP COLUMN date_debut;
-ALTER TABLE pret
-DROP COLUMN date_fin;
+
 
 CREATE TABLE reservation(
    id_reservation INT,
@@ -101,6 +93,23 @@ CREATE TABLE reservation(
    FOREIGN KEY(id_exemplaire) REFERENCES exemplaire(id_exemplaire),
    FOREIGN KEY(id_status) REFERENCES status(id_status),
    FOREIGN KEY(id_adherent) REFERENCES adherant(id_adherent)
+);
+
+
+
+CREATE TABLE status(
+   id_status INT,
+   nom_status VARCHAR(50),
+   PRIMARY KEY(id_status)
+);
+
+CREATE TABLE statut_reservation (
+    id_statut INT,
+    id_reservation INT,
+    date DATE,
+    PRIMARY KEY (id_statut, id_reservation, date),
+    FOREIGN KEY (id_statut) REFERENCES status(id_status),
+    FOREIGN KEY (id_reservation) REFERENCES reservation(id_reservation)
 );
 
 CREATE TABLE prolongement(
