@@ -25,14 +25,18 @@
             <tr>
                 <th>Titre</th>
                 <th>Détail</th>
+                <th>Détail JSON</th>
             </tr>
         </thead>
         <tbody>
         <c:forEach var="livre" items="${livres}">
             <tr>
-                <td>${livre.titre}</td>
+                <td><c:out value="${livre.titre}" /></td>
                 <td>
-                    <a href="livre_detail?id=${livre.idLivre}" class="rendu-button" style="text-decoration:none;">Détail</a>
+                    <a href="livre_detail?id=${livre.idLivre}" class="link-livre">Détail</a>
+                </td>
+                <td>
+                    <a href="livre_detail_json?id=${livre.idLivre}" class="link-livre">Détail JSON</a>
                 </td>
             </tr>
         </c:forEach>

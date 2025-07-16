@@ -25,14 +25,18 @@
             <tr>
                 <th>Nom Complet</th>
                 <th>Détail</th>
+                <th>Détail JSON</th>
             </tr>
         </thead>
         <tbody>
         <c:forEach var="adherant" items="${adherants}">
             <tr>
-                <td>${adherant.prenom} ${adherant.nom}</td>
+                <td><c:out value="${adherant.prenom} ${adherant.nom}" /></td>
                 <td>
                     <a href="adherent_detail?id=${adherant.idAdherent}" class="link-adherent">Détail</a>
+                </td>
+                <td>
+                    <a href="adherent_detail_json?id=${adherant.idAdherent}" class="link-adherent">Détail JSON</a>
                 </td>
             </tr>
         </c:forEach>

@@ -2,6 +2,7 @@ package com.projet.service;
 
 import com.projet.entity.Pret;
 import com.projet.entity.Adherant;
+import com.projet.entity.Exemplaire;
 import com.projet.entity.Penalite;
 import com.projet.entity.Abonnement;
 import com.projet.repository.PretRepository;
@@ -23,6 +24,9 @@ public class PretService {
 
     @Autowired
     private AbonnementService abonnementService;
+
+    @Autowired
+    private ExemplaireService exemplaireService;
 
     public static class PretInsertionResult {
         private boolean success;
@@ -141,7 +145,21 @@ public class PretService {
         }
 
         // Si toutes les conditions sont remplies, sauvegarder le prêt
-        pret.getExemplaire().setDisponible(pret.getExemplaire().getDisponible() - 1);
+        // pret.getExemplaire().setDisponible(pret.getExemplaire().getDisponible() - 1);
+        Exemplaire exemplaire = pret.getExemplaire();
+        int nouvelleDisponibilite = exemplaire.getDisponible() - 1;
+        if (nouvelleDisponibilite < 0) {
+            System.out.println("Échec : La disponibilité ne peut pas devenir négative.");
+            return new PretInsertionResult(false, "La disponibilité ne peut pas devenir négative.");
+        }
+        exemplaire.setDisponible(nouvelleDisponibilite);
+        try {
+            exemplaireService.save(exemplaire);
+            System.out.println("Disponibilité de l'exemplaire " + exemplaire.getIdExemplaire() + " mise à jour à " + nouvelleDisponibilite);
+        } catch (Exception e) {
+            System.out.println("Erreur lors de la sauvegarde de l'exemplaire : " + e.getMessage());
+            return new PretInsertionResult(false, "Erreur lors de la mise à jour de la disponibilité : " + e.getMessage());
+        }
         pretRepository.save(pret);
         System.out.println("Prêt inséré avec succès.");
         return new PretInsertionResult(true, null);
