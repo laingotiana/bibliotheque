@@ -69,22 +69,20 @@ public class AdminController {
         }
 
     }
-     
-    @GetMapping("/rendre_livre")
+ 
+
+
+     @GetMapping("/rendre_livre")
     public String rendrePret(
             @RequestParam("pretId") int pretId,
             @RequestParam("date_rendu") @DateTimeFormat(pattern = "yyyy-MM-dd") Date date_rendu,
             Model model) {
-        
         try {
             Pret pret = pretService.findPretById(pretId);
-            
-            // Mettre à jour la date de rendu
             pret.setDate_rendu(date_rendu);
             pret.setRendu(1);
             pretService.save(pret);
             
-            // Calculer le retard par rapport à la date de fin prévue
             if (pret.getDateFin() != null) {
                 long joursRetard = TimeUnit.DAYS.convert(
                     date_rendu.getTime() - pret.getDateFin().getTime(),
@@ -93,19 +91,14 @@ public class AdminController {
                 
                 if (joursRetard > 0) {
                     System.out.println("Vous avez dépassé la date de retour");
-                    
-                    // Appliquer pénalité
                     Penalite penalite = new Penalite();
                     penalite.setAdherant(pret.getAdherant());
                     penalite.setDebutPenalite(date_rendu);
-                    
                     Calendar calendar = Calendar.getInstance();
                     calendar.setTime(date_rendu);
-                    calendar.add(Calendar.DAY_OF_YEAR, 10); // Pénalité de 10 jours
+                    calendar.add(Calendar.DAY_OF_YEAR,pret.getAdherant().getProfil().getJourpenalite());
                     penalite.setFinPenalite(calendar.getTime());
-                    
                     penaliteService.save(penalite);
-                    
                     model.addAttribute("warning", "Livre rendu avec " + joursRetard + " jours de retard. Pénalité appliquée.");
                 }
             }
@@ -113,18 +106,11 @@ public class AdminController {
             model.addAttribute("message", "Le prêt a été marqué comme rendu avec succès.");
             model.addAttribute("prets", pretService.findAll());
             return "Admin/home";
-            
         } catch (Exception e) {
             model.addAttribute("erreur", "Erreur : " + e.getMessage());
             model.addAttribute("prets", pretService.findAll());
             return "Admin/home";
         }
-    }
-    @GetMapping("/render_gestion")
-    public String getAllReservation(Model model) {
-        List<Reservation> reservations = reservationService.findAll();
-        model.addAttribute("reservations", reservations);
-        return "Admin/Reservation";
     }
 
     @GetMapping("/accepter_reservation")
@@ -377,6 +363,9 @@ public class AdminController {
         }
         return result;
     }
+
+
+    
 
 
 
