@@ -67,13 +67,103 @@ public class AdherantController {
         return "Adherant/insert_pret";
     }
 
+    // @PostMapping("/insert_pret")
+    // public String insertPret(@RequestParam("id_exemplaire") int idExemplaire,
+    //                          @RequestParam("id_type") int idType,
+    //                          @RequestParam("date_debut") String dateDebutStr,
+    //                          @RequestParam("date_fin") String dateFinStr,
+    //                          Model model,
+    //                          HttpSession session) {
+    //     try {
+    //         // Vérification de la session
+    //         Integer adherantId = (Integer) session.getAttribute("adherantId");
+    //         if (adherantId == null) {
+    //             model.addAttribute("erreur", "Vous devez être connecté pour effectuer un prêt.");
+    //             return "Adherant/form_adherant";
+    //         }
+    //         Adherant adherant = adherantService.findById(adherantId).orElse(null);
+    //         if (adherant == null) {
+    //             model.addAttribute("erreur", "Adhérent non trouvé.");
+    //             return "Adherant/form_adherant";
+    //         }
+
+    //         // Vérification de l'exemplaire
+    //         Exemplaire exemplaire = exemplaireService.findById(idExemplaire).orElse(null);
+    //         if (exemplaire == null) {
+    //             model.addAttribute("erreur", "Exemplaire non trouvé.");
+    //             return "Adherant/insert_pret";
+    //         }
+
+    //         // Vérification du type de prêt
+    //         TypePret typePret = typePretService.findById(idType).orElse(null);
+    //         if (typePret == null) {
+    //             model.addAttribute("erreur", "Type de prêt non trouvé.");
+    //             return "Adherant/insert_pret";
+    //         }
+
+    //         // Validation des chaînes de dates
+    //         if (dateDebutStr == null || dateDebutStr.trim().isEmpty() || dateFinStr == null || dateFinStr.trim().isEmpty()) {
+    //             model.addAttribute("erreur", "Les dates de début et de fin doivent être fournies.");
+    //             return "Adherant/insert_pret";
+    //         }
+
+    //         // Parsing des dates
+    //         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+    //         sdf.setLenient(false);
+    //         Date dateDebut;
+    //         Date dateFin;
+    //         try {
+    //             dateDebut = sdf.parse(dateDebutStr);
+    //             dateFin = sdf.parse(dateFinStr);
+    //         } catch (ParseException e) {
+    //             model.addAttribute("erreur", "Format de date invalide. Utilisez le format AAAA-MM-JJ.");
+    //             return "Adherant/insert_pret";
+    //         }
+
+    //         // Validation des dates
+    //         if (dateDebut.after(dateFin)) {
+    //             model.addAttribute("erreur", "La date de début ne peut pas être après la date de fin.");
+    //             return "Adherant/insert_pret";
+    //         }
+
+    //         // Création du prêt
+    //         Pret pret = new Pret();
+    //         pret.setAdherant(adherant);
+    //         pret.setExemplaire(exemplaire);
+    //         pret.setTypePret(typePret);
+    //         pret.setDateDebut(dateDebut);
+    //         pret.setDateFin(dateFin);
+    //         pret.setRendu(0);
+    //         pret.setDate_rendu(null);
+
+    //         // Appel à PretService pour insérer le prêt avec toutes les vérifications
+    //         PretInsertionResult result = pretService.insererPretSiQuota(adherant, pret);
+
+    //         if (result.isSuccess()) {
+    //             model.addAttribute("message", "Le prêt a été inséré avec succès !");
+    //         } else {
+    //             model.addAttribute("erreur", result.getErrorMessage());
+    //         }
+    //     } catch (Exception e) {
+    //         model.addAttribute("erreur", "Erreur lors de l'insertion du prêt : " + e.getMessage());
+    //         e.printStackTrace();
+    //     }
+
+    //     // Renvoyer les listes pour le formulaire
+    //     model.addAttribute("exemplaires", exemplaireService.getAllExemplairesAvecLivre());
+    //     model.addAttribute("adherants", adherantService.findAll());
+    //     model.addAttribute("types", typePretService.getAllTypePrets());
+
+    //     return "Adherant/insert_pret";
+    // }
+
+
     @PostMapping("/insert_pret")
     public String insertPret(@RequestParam("id_exemplaire") int idExemplaire,
-                             @RequestParam("id_type") int idType,
-                             @RequestParam("date_debut") String dateDebutStr,
-                             @RequestParam("date_fin") String dateFinStr,
-                             Model model,
-                             HttpSession session) {
+                            @RequestParam("id_type") int idType,
+                            @RequestParam("date_debut") String dateDebutStr,
+                            Model model,
+                            HttpSession session) {
         try {
             // Vérification de la session
             Integer adherantId = (Integer) session.getAttribute("adherantId");
@@ -101,30 +191,33 @@ public class AdherantController {
                 return "Adherant/insert_pret";
             }
 
-            // Validation des chaînes de dates
-            if (dateDebutStr == null || dateDebutStr.trim().isEmpty() || dateFinStr == null || dateFinStr.trim().isEmpty()) {
-                model.addAttribute("erreur", "Les dates de début et de fin doivent être fournies.");
+            // Validation de la date de début
+            if (dateDebutStr == null || dateDebutStr.trim().isEmpty()) {
+                model.addAttribute("erreur", "La date de début doit être fournie.");
                 return "Adherant/insert_pret";
             }
 
-            // Parsing des dates
+            // Parsing de la date de début
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             sdf.setLenient(false);
             Date dateDebut;
-            Date dateFin;
             try {
                 dateDebut = sdf.parse(dateDebutStr);
-                dateFin = sdf.parse(dateFinStr);
             } catch (ParseException e) {
                 model.addAttribute("erreur", "Format de date invalide. Utilisez le format AAAA-MM-JJ.");
                 return "Adherant/insert_pret";
             }
 
-            // Validation des dates
-            if (dateDebut.after(dateFin)) {
-                model.addAttribute("erreur", "La date de début ne peut pas être après la date de fin.");
+            // Calcul de la date de fin en utilisant jourPret du profil
+            if (adherant.getProfil() == null) {
+                model.addAttribute("erreur", "Aucun profil associé à l'adhérent.");
                 return "Adherant/insert_pret";
             }
+            int jourPret = adherant.getProfil().getJourPret();
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(dateDebut);
+            calendar.add(Calendar.DAY_OF_MONTH, jourPret);
+            Date dateFin = calendar.getTime();
 
             // Création du prêt
             Pret pret = new Pret();
@@ -137,7 +230,7 @@ public class AdherantController {
             pret.setDate_rendu(null);
 
             // Appel à PretService pour insérer le prêt avec toutes les vérifications
-            PretInsertionResult result = pretService.insererPretSiQuota(adherant, pret);
+            PretService.PretInsertionResult result = pretService.insererPretSiQuota(adherant, pret);
 
             if (result.isSuccess()) {
                 model.addAttribute("message", "Le prêt a été inséré avec succès !");
@@ -156,6 +249,7 @@ public class AdherantController {
 
         return "Adherant/insert_pret";
     }
+
 
     @GetMapping("/liste_pret")
     public String voirPretsAdherant(HttpSession session, Model model) {
